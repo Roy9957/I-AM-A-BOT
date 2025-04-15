@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>I am bot</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1f1f1f, #0d0d0d);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 420px;
+      background: #222;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+
+    h2 {
+      background: #0ff;
+      color: #000;
+      margin: 0;
+      padding: 12px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background: #111;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      position: relative;
+      animation: fadeIn 0.4s ease-in-out;
+      white-space: pre-wrap;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    .you {
+      background: #0af;
+      color: #fff;
+      align-self: flex-end;
+    }
+
+    .bot {
+      background: #0f0;
+      color: #000;
+      align-self: flex-start;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 12px;
+      background: #222222;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      outline-color: #0056FF;
+      border-radius: 8px;
+      background: #333;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 12px;
+      border: none;
+      background: #0ff;
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    button i {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+
+    .shake {
+      animation: shake 0.3s ease;
+    }
+
+    .timestamp {
+      font-size: 10px;
+      color: #ccc;
+      margin-top: 4px;
+      display: block;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h2><i class="fas fa-robot"></i> I am bot</h2>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Share your Feelings....">
+      <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDlG2EVGUxnuqZYxSI5fIvxP0y05IYtK0E",
+      authDomain: "form-login0033.firebaseapp.com",
+      databaseURL: "https://form-login0033-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "form-login0033",
+      storageBucket: "form-login0033.appspot.com",
+      messagingSenderId: "616699934821",
+      appId: "1:616699934821:web:be919b442ebc3741992e8c",
+      measurementId: "G-EGC0KHNBS2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const messagesRef = ref(db, "messages");
+
+    let userID = localStorage.getItem("user_id");
+    if (!userID) {
+      userID = "user_" + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem("user_id", userID);
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("userInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    function sendMessage() {
+      const input = document.getElementById("userInput");
+      const text = input.value.trim();
+
+      if (text === "") {
+        input.classList.add("shake");
+        setTimeout(() => input.classList.remove("shake"), 300);
+        return;
+      }
+
+      const snd = new Audio("https://www.soundjay.com/button/beep-07.mp3");
+      snd.play();
+
+      push(messagesRef, {
+        userID: userID,
+        text: text,
+        time: Date.now()
+      });
+
+      input.value = "";
+    }
+
+    const chatBox = document.getElementById("chatBox");
+
+    onChildAdded(messagesRef, (data) => {
+      const msg = data.val();
+      const msgDiv = document.createElement("div");
+      const isMine = msg.userID === userID;
+      msgDiv.classList.add("message", isMine ? "you" : "bot");
+
+      const messageText = document.createElement("span");
+      const timestamp = document.createElement("span");
+      timestamp.className = "timestamp";
+      timestamp.textContent = new Date(msg.time).toLocaleTimeString();
+
+      if (!isMine) {
+        let i = 0;
+        const botText = `${msg.text}`;
+        messageText.textContent = "BOT: ";
+        const typingInterval = setInterval(() => {
+          if (i < botText.length) {
+            messageText.textContent += botText.charAt(i);
+            i++;
+          } else {
+            clearInterval(typingInterval);
+            msgDiv.appendChild(timestamp);
+          }
+        }, 30);
+      } else {
+        messageText.textContent = `YOU: ${msg.text}`;
+        msgDiv.appendChild(timestamp);
+      }
+
+      msgDiv.appendChild(messageText);
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
+</body>
+</html>
